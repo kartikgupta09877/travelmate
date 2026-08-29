@@ -23,6 +23,10 @@ class TripOut(BaseModel):
     meeting_point: Optional[CheckpointSuggestion] = None
     cost_per_person: float = 0
     total_cost: float = 0
+    solo_travel_cost: float = 0
+    shared_travel_cost: float = 0
+    per_person_cost: float = 0
+    estimated_savings: float = 0
     distance_km: float = 0
     duration_min: int = 0
     status: TripStatus

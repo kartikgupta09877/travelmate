@@ -22,6 +22,8 @@ LEGS_PER_MONTH = {
 
 
 def estimate_trip_cost(distance_km: float, vehicle_type: str = "car") -> float:
+    if distance_km < 0:
+        raise ValueError("distance_km cannot be negative")
     rate = RATE_PER_KM.get(vehicle_type, RATE_PER_KM["car"])
     return round(BASE_COST + distance_km * rate)
 
@@ -42,6 +44,35 @@ def split_table(total: float, max_travelers: int = 4) -> list[dict]:
 def saving_per_trip(total: float, travelers: int) -> float:
     """What each traveller saves vs. paying the whole trip alone."""
     return round(total - per_person(total, travelers))
+
+
+def cost_breakdown(
+    distance_km: float,
+    vehicle_type: str = "car",
+    travelers: int = 1,
+    total_cost: float | None = None,
+) -> dict:
+    """Build the canonical, transparent estimate used by journeys and trips.
+
+    ``total_cost`` is accepted for a host's supplied estimate (for example,
+    where they know tolls).  It remains the shared vehicle expense; no payment
+    is collected or implied by this calculation.
+    """
+    travelers = max(1, int(travelers))
+    solo_cost = (
+        round(float(total_cost))
+        if total_cost is not None
+        else estimate_trip_cost(distance_km, vehicle_type)
+    )
+    if solo_cost < 0:
+        raise ValueError("total_cost cannot be negative")
+    per_person_cost = per_person(solo_cost, travelers)
+    return {
+        "solo_travel_cost": solo_cost,
+        "shared_travel_cost": solo_cost,
+        "per_person_cost": per_person_cost,
+        "estimated_savings": saving_per_trip(solo_cost, travelers),
+    }
 
 
 def monthly_projection(total_per_trip: float, travelers: int, recurrence: str) -> dict:

@@ -24,6 +24,21 @@ def haversine(a: Point, b: Point) -> float:
     return 2 * EARTH_KM * math.asin(min(1.0, math.sqrt(h)))
 
 
+def route_estimate(origin: Point, destination: Point) -> tuple[float, int]:
+    """Return the demo route distance and travel duration.
+
+    TravelMate deliberately has no routing-provider dependency yet, so this is
+    a straight-line corridor estimate.  Keeping the approximation here means
+    journey creation, previews, and future routing-provider integrations use
+    one definition of distance and duration.
+    """
+    distance_km = round(haversine(origin, destination), 1)
+    # Effective city/intercity speeds, including normal stops and traffic.
+    speed_kmh = 22.0 if distance_km <= 30 else 50.0
+    duration_min = int(distance_km / speed_kmh * 60)
+    return distance_km, duration_min
+
+
 def bearing(a: Point, b: Point) -> float:
     """Initial bearing from a to b in degrees (0-360)."""
     lat1, lng1 = math.radians(a[0]), math.radians(a[1])

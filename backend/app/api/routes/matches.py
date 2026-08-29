@@ -184,7 +184,12 @@ async def accept(match_id: str, me: dict = Depends(get_current_user)):
     # Build the confirmed trip (exact meeting point now revealed to both).
     participants = [match["requester_id"], match["host_id"]]
     travelers = len(participants)
-    total = journey.get("estimated_cost_total") or 0
+    costs = cost_svc.cost_breakdown(
+        journey.get("distance_km", 0),
+        journey.get("vehicle_type", "none"),
+        travelers,
+        total_cost=journey.get("estimated_cost_total"),
+    )
     conv_id = new_id()
     trip = {
         "_id": new_id(),
@@ -197,8 +202,9 @@ async def accept(match_id: str, me: dict = Depends(get_current_user)):
         "date": journey.get("date"),
         "departure_time": journey["departure_time"],
         "meeting_point": match.get("suggested_checkpoint"),
-        "cost_per_person": cost_svc.per_person(total, travelers),
-        "total_cost": total,
+        "cost_per_person": costs["per_person_cost"],
+        "total_cost": costs["shared_travel_cost"],
+        **costs,
         "distance_km": journey.get("distance_km", 0),
         "duration_min": journey.get("duration_min", 0),
         "status": "confirmed",

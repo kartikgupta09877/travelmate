@@ -73,6 +73,31 @@ def suggest_checkpoints(
     return suggestions
 
 
+def suggest_route_checkpoints(
+    origin: Point,
+    destination: Point,
+    catalog: List[dict],
+    departure_time: str = "08:00",
+    max_reach_km: float = 5.0,
+    top: int = 1,
+) -> List[dict]:
+    """Suggest public meeting points for a newly created local journey.
+
+    A second traveller is not known at creation time.  Using the host origin
+    for both sides lets the established checkpoint ranker favour a safe,
+    low-detour public location near the start without exposing an address.
+    """
+    return suggest_checkpoints(
+        origin,
+        origin,
+        destination,
+        catalog,
+        departure_time=departure_time,
+        max_reach_km=max_reach_km,
+        top=top,
+    )
+
+
 def checkpoint_score(suggestion: Optional[dict]) -> float:
     """0-100 quality of the best checkpoint (closer + balanced + low detour)."""
     if not suggestion:

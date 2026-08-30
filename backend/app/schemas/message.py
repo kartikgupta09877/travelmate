@@ -28,3 +28,11 @@ class ConversationOut(BaseModel):
     last_message: Optional[str] = None
     updated_at: datetime
     unread: int = 0
+
+
+class ConversationContactOut(BaseModel):
+    """A confirmed trip partner's contact, visible only to conversation members."""
+
+    user_id: str
+    full_name: str
+    phone: Optional[str] = None

@@ -7,7 +7,7 @@ users provide an approximate city/zone.
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 from .common import Role, VehicleType
 
@@ -24,9 +24,19 @@ class VehicleInfo(BaseModel):
     type: VehicleType = VehicleType.none
     model: Optional[str] = None
     color: Optional[str] = None
-    seats: int = 0
+    seats: int = Field(default=0, ge=0, le=6)
     # Only a hint (e.g. "DL ** ** 1234") is ever shown; never the full plate publicly.
     plate_hint: Optional[str] = None
+
+    @model_validator(mode="after")
+    def validate_seats(self):
+        if self.type == VehicleType.none:
+            self.seats = 0
+        elif self.type == VehicleType.bike and self.seats != 1:
+            raise ValueError("a bike has one passenger seat")
+        elif self.type == VehicleType.car and not 1 <= self.seats <= 6:
+            raise ValueError("a car must have between 1 and 6 passenger seats")
+        return self
 
 
 class UserStats(BaseModel):
@@ -46,6 +56,7 @@ class UserCreate(BaseModel):
     city: str
     date_of_birth: Optional[str] = None  # ISO date; used only for age eligibility
     photo_url: Optional[str] = None
+    vehicle: VehicleInfo = Field(default_factory=VehicleInfo)
 
 
 class UserLogin(BaseModel):

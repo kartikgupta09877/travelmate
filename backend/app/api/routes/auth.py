@@ -41,7 +41,7 @@ def _default_user_doc(payload: UserCreate) -> dict:
         "role": "user",
         "preferred_travel_type": "both",
         "college_or_company": None,
-        "vehicle": {"type": "none", "seats": 0},
+        "vehicle": payload.vehicle.model_dump(),
         "verification": {
             "email": False,
             "phone": False,

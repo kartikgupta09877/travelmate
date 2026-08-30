@@ -1,10 +1,16 @@
 """Regression tests for Day 4 journey and cost-management behaviour."""
+import asyncio
 import unittest
 
 from pydantic import ValidationError
 
+from app.api.routes.auth import _default_user_doc
+from app.api.routes.messages import get_partner_contact
+from app.core.database import close_mongo_connection, connect_to_mongo, get_database
+from app.db.seed import seed_if_empty
 from app.main import app
 from app.schemas.journey import JourneyCreate
+from app.schemas.user import UserCreate
 from app.services.checkpoint import suggest_route_checkpoints
 from app.services.cost import cost_breakdown
 from app.services.geo import route_estimate
@@ -79,6 +85,38 @@ class JourneySchemaTests(unittest.TestCase):
             )
 
 
+class ProfileVehicleTests(unittest.TestCase):
+    def test_new_profile_can_store_a_car_and_passenger_seat_count(self):
+        user = UserCreate.model_validate(
+            {
+                "full_name": "Driver One",
+                "email": "driver@example.com",
+                "phone": "+91 90000 12345",
+                "password": "password123",
+                "city": "New Delhi",
+                "vehicle": {"type": "car", "seats": 4},
+            }
+        )
+
+        self.assertEqual(user.vehicle.type.value, "car")
+        self.assertEqual(user.vehicle.seats, 4)
+        self.assertEqual(_default_user_doc(user)["vehicle"], {"type": "car", "model": None, "color": None, "seats": 4, "plate_hint": None})
+
+    def test_no_vehicle_profile_keeps_zero_seats(self):
+        user = UserCreate.model_validate(
+            {
+                "full_name": "Rider Two",
+                "email": "rider@example.com",
+                "phone": "+91 90000 67890",
+                "password": "password123",
+                "city": "Noida",
+                "vehicle": {"type": "none", "seats": 5},
+            }
+        )
+
+        self.assertEqual(user.vehicle.seats, 0)
+
+
 class JourneyRouteTests(unittest.TestCase):
     def test_cost_preview_and_trip_cost_routes_are_registered(self):
         routes = {(route.path, tuple(sorted(route.methods or []))) for route in app.routes}
@@ -86,3 +124,18 @@ class JourneyRouteTests(unittest.TestCase):
         self.assertIn(("/api/journeys/preview", ("POST",)), routes)
         self.assertIn(("/api/journeys/preview/cost", ("GET",)), routes)
         self.assertIn(("/api/trips/{trip_id}/cost", ("GET",)), routes)
+        self.assertIn(("/api/conversations/{conversation_id}/contact", ("GET",)), routes)
+
+    def test_confirmed_trip_participant_can_retrieve_partner_contact(self):
+        async def check_contact():
+            await connect_to_mongo()
+            try:
+                await seed_if_empty()
+                me = await get_database().users.find_one({"_id": "u_kartik"})
+                return await get_partner_contact("conv_1", me)
+            finally:
+                await close_mongo_connection()
+
+        contact = asyncio.run(check_contact())
+        self.assertEqual(contact["user_id"], "u_rahul")
+        self.assertEqual(contact["phone"], "+91 90000 00003")

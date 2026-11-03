@@ -1,0 +1,39 @@
+services:
+  # TravelMate Backend Web Service
+  - type: web
+    name: travelmate-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: USE_MOCK_DB
+        value: "true" # Set to false once MONGODB_URI is provided
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB
+        value: "travelmate"
+      - key: SEED_ON_STARTUP
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+
+  # TravelMate Frontend Static Site
+  - type: web
+    name: travelmate-frontend
+    runtime: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_BASE
+        sync: false # Set to your deployed backend URL (e.g. https://travelmate-backend.onrender.com)

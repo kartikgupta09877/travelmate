@@ -1,15 +1,15 @@
-import { Route as RouteIcon, Users } from "lucide-react";
+import { Route as RouteIcon, Users, Sparkles } from "lucide-react";
 import { JourneyForm } from "@/components/JourneyForm";
 import { SectionHeading } from "@/components/ui";
 
 export default function CreateLong() {
   return (
-    <div className="mx-auto max-w-5xl">
-      <SectionHeading eyebrow="Long trip" title="Create a long trip"
-        sub="Intercity and group journeys over ~30 km. Set your date, budget and seats, then match with verified travellers going the same way." />
-      <div className="mb-5 flex items-center gap-3 rounded-xl bg-signal-wash px-4 py-3 text-sm text-signal">
-        <Users size={18} className="shrink-0" />
-        <span>Travelling solo or in a group — other verified users can request to join, and costs are shared fairly per person.</span>
+    <div className="space-y-6 animate-fade">
+      <SectionHeading eyebrow="Intercity Trip" title="Create a long-distance trip"
+        sub="City-to-city and intercity journeys over ~30 km. Set your travel date, available seats, and budget to find verified partners." />
+      <div className="flex items-center gap-3.5 rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs font-semibold text-amber-800 shadow-2xs">
+        <Users size={20} className="shrink-0 text-amber-600" />
+        <span>Solo travellers or group rides — verified members can view your route and request to share the travel costs.</span>
       </div>
       <JourneyForm type="long" />
     </div>

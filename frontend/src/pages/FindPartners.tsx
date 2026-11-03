@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, SlidersHorizontal, Users, MapPin } from "lucide-react";
+import { Search, SlidersHorizontal, Users, MapPin, Sparkles, Filter } from "lucide-react";
 import type { GeoPoint, JourneyType, PartnerResult, PartnerSearchQuery } from "@/lib/types";
 import { api, ApiError } from "@/lib/api";
 import { LocationField } from "@/components/LocationField";
@@ -31,12 +31,12 @@ export default function FindPartners() {
   const runSearch = async (override?: Partial<PartnerSearchQuery>) => {
     const o = override?.origin ?? origin;
     const d = override?.destination ?? destination;
-    if (!o || !d) { toast.push("Choose a start and destination first.", "info"); return; }
+    if (!o || !d) { toast.push("Choose a start area and destination first.", "info"); return; }
     setLoading(true);
     try {
       const body: PartnerSearchQuery = {
         type: override?.type ?? type, origin: o, destination: d,
-        date: (override?.type ?? type) === "long"? (override?.date ?? date ?? null): null,
+        date: (override?.type ?? type) === "long" ? (override?.date ?? date ?? null) : null,
         departure_time: override?.departure_time ?? time,
         seats_needed: override?.seats_needed ?? seats,
         budget: budget ? Number(budget) : null,
@@ -49,7 +49,7 @@ export default function FindPartners() {
     } finally { setLoading(false); }
   };
 
-  // If we arrived from creating a journey, prefill + auto-search from it.
+  // If arrived from journey prefill
   const journeyId = params.get("journey");
   useEffect(() => {
     if (!journeyId) return;
@@ -67,60 +67,80 @@ export default function FindPartners() {
   const isLong = type === "long";
 
   return (
-    <div className="space-y-6">
-      <SectionHeading eyebrow="Find partners" title="Search travellers going your way"
-        sub="We rank verified partners by route overlap, timing, destination, checkpoint distance and reliability — start points don't need to match." />
+    <div className="space-y-6 animate-fade">
+      <SectionHeading eyebrow="Partner Discovery" title="Search verified travellers going your route"
+        sub="We match partners on route overlap, timing, checkpoint distance, and reliability rating — exact addresses stay completely private." />
 
-      <Card>
-        <div className="p-5">
-          <div className="mb-4"><Segmented value={type} onChange={setType}
-            options={[{ value: "local", label: "Local travel" }, { value: "long", label: "Long trip" }]} /></div>
+      {/* Search Filter Card */}
+      <Card className="border border-slate-200/80 shadow-card">
+        <div className="p-6">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+            <Segmented value={type} onChange={setType}
+              options={[{ value: "local", label: "Local Commute" }, { value: "long", label: "Intercity Trip" }]} />
+            <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+              <Sparkles size={14} className="text-teal" /> Multi-factor overlap scoring
+            </div>
+          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="From"><LocationField scope={type} value={origin} onChange={setOrigin} placeholder="Your area" /></Field>
-            <Field label="To"><LocationField scope={type} value={destination} onChange={setDestination} placeholder="Destination" /></Field>
+            <Field label="Starting From">
+              <LocationField scope={type} value={origin} onChange={setOrigin} placeholder="Select origin area" />
+            </Field>
+            <Field label="Going To">
+              <LocationField scope={type} value={destination} onChange={setDestination} placeholder="Select destination" />
+            </Field>
           </div>
 
           <div className={cx("mt-4 grid gap-4", isLong ? "sm:grid-cols-4" : "sm:grid-cols-3")}>
-            {isLong && <Field label="Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>}
-            <Field label="Departure"><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></Field>
-            <Field label="Seats needed">
+            {isLong && <Field label="Trip Date"><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>}
+            <Field label="Departure Time"><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></Field>
+            <Field label="Seats Needed">
               <Select value={seats} onChange={(e) => setSeats(Number(e.target.value))}>
-                {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+                {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n} seat{n === 1 ? "" : "s"}</option>)}
               </Select>
             </Field>
-            {isLong && <Field label="Budget" hint="optional"><Input type="number" placeholder="₹" value={budget} onChange={(e) => setBudget(e.target.value)} /></Field>}
+            {isLong && <Field label="Max Budget" hint="optional"><Input type="number" placeholder="₹" value={budget} onChange={(e) => setBudget(e.target.value)} /></Field>}
+
             {!isLong && (
               <div className="flex items-end">
-                <Button className="w-full" onClick={() => runSearch()} loading={loading}><Search size={16} /> Search</Button>
+                <Button lg className="w-full" onClick={() => runSearch()} loading={loading}>
+                  <Search size={16} /> Search Partners
+                </Button>
               </div>
             )}
           </div>
 
           {isLong && (
-            <div className="mt-4 flex justify-end">
-              <Button onClick={() => runSearch()} loading={loading}><Search size={16} /> Search partners</Button>
+            <div className="mt-5 flex justify-end">
+              <Button lg onClick={() => runSearch()} loading={loading}>
+                <Search size={16} /> Search Intercity Partners
+              </Button>
             </div>
           )}
         </div>
       </Card>
 
-      {/* Results */}
+      {/* Results grid */}
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2">{[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}</div>
+        <div className="grid gap-5 md:grid-cols-2">{[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}</div>
       ) : results == null ? (
-        <EmptyState icon={<SlidersHorizontal size={22} />} title="Set your route to see matches"
-          sub="Enter where you're starting from and where you're headed, then search." />
+        <EmptyState icon={<SlidersHorizontal size={24} />} title="Enter your route to see ranked matches"
+          sub="Choose where you're starting and where you're headed to discover compatible travel partners." />
       ) : results.length === 0 ? (
-        <EmptyState icon={<Users size={22} />} title="No compatible partners yet"
-          sub="Try widening your departure time or checking a nearby destination. New verified travellers join every day." />
+        <EmptyState icon={<Users size={24} />} title="No compatible partners found yet"
+          sub="Try widening your departure time range or selecting a nearby landmark. Verified members join daily." />
       ) : (
         <>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-ink-muted"><span className="font-semibold text-ink">{results.length}</span> compatible {results.length === 1 ? "partner" : "partners"} found</p>
-            <span className="inline-flex items-center gap-1.5 text-xs text-ink-muted"><MapPin size={13} /> Ranked by safety, route & time</span>
+          <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+            <p className="text-sm font-semibold text-slate-500">
+              Found <strong className="text-ocean-900 font-extrabold">{results.length}</strong> compatible {results.length === 1 ? "partner" : "partners"}
+            </p>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-dark bg-teal-wash/60 px-3 py-1 rounded-full border border-teal/15">
+              <MapPin size={13} /> Ranked by route safety & time overlap
+            </span>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+
+          <div className="grid gap-5 md:grid-cols-2">
             {results.map((r) => (
               <PartnerCard key={r.journey.id} r={r} yourTime={time} onOpen={() => setActive(r)} />
             ))}
@@ -128,7 +148,8 @@ export default function FindPartners() {
         </>
       )}
 
-      <Modal open={!!active} onClose={() => setActive(null)} title="Match details" size="lg">
+      {/* Match details modal */}
+      <Modal open={!!active} onClose={() => setActive(null)} title="Match Details & Route Overview" size="lg">
         {active && (
           <MatchDetail result={active} requesterOrigin={origin} requesterDestination={destination}
             departureTime={time} onRequested={() => setTimeout(() => setActive(null), 1400)} />

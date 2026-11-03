@@ -6,6 +6,7 @@ fields (password hash, raw contact details, blocked lists) to other members.
 from typing import Dict, List, Optional
 
 from app.core.database import get_database
+from app.services.geo import approximate_coord
 from app.services.matching import trust_level
 
 
@@ -48,6 +49,26 @@ def private_profile(doc: dict) -> dict:
         }
     )
     return pub
+
+
+def public_geopoint(point: Optional[dict]) -> Optional[dict]:
+    """Coarsen a stored origin/destination for any viewer who is not its owner.
+
+    Exact coordinates must never leave the server for another member. We round
+    lat/lng to the public grid (~1.1 km) and mark the point ``approximate`` so
+    clients render an area rather than a precise pin. The human-readable
+    ``label``/``zone`` (already public area names) are preserved so the map and
+    route line keep working. Returns the value unchanged when it is falsy.
+    """
+    if not point:
+        return point
+    out = dict(point)
+    if out.get("lat") is not None:
+        out["lat"] = approximate_coord(out["lat"])
+    if out.get("lng") is not None:
+        out["lng"] = approximate_coord(out["lng"])
+    out["approximate"] = True
+    return out
 
 
 async def get_user(user_id: str) -> Optional[dict]:

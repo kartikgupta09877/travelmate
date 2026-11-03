@@ -45,8 +45,8 @@ function MatchCard({ m, box, onChange }: { m: Match; box: "incoming" | "outgoing
           <Avatar name={p.full_name} src={p.photo_url} id={p.id} size={48} verified={p.verification.identity} />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <Link to={`/app/profile/${p.id}`} className="truncate font-display font-700 text-ink hover:underline">{p.full_name}</Link>
-              <span className="text-xs text-ink-muted">· {relativeTime(m.created_at)}</span>
+              <Link to={`/app/profile/${p.id}`} className="truncate font-display font-800 text-ocean-900 hover:underline">{p.full_name}</Link>
+              <span className="text-xs font-semibold text-slate-600">· {relativeTime(m.created_at)}</span>
             </div>
             <div className="mt-0.5"><Stars rating={p.stats.rating} count={p.stats.ratings_count} size={12} /></div>
             <div className="mt-2"><VerificationBadges v={p.verification} size="sm" /></div>
@@ -60,14 +60,14 @@ function MatchCard({ m, box, onChange }: { m: Match; box: "incoming" | "outgoing
         {m.reasons?.length > 0 && (
           <ul className="mt-3 grid gap-1 sm:grid-cols-2">
             {m.reasons.slice(0, 4).map((r, i) => (
-              <li key={i} className="flex items-center gap-1.5 text-xs text-ink-muted"><CheckCircle2 size={12} className="shrink-0 text-verified" /> {r}</li>
+              <li key={i} className="flex items-center gap-1.5 text-xs font-semibold text-slate-700"><CheckCircle2 size={12} className="shrink-0 text-emerald-600" /> {r}</li>
             ))}
           </ul>
         )}
 
         {box === "incoming" && pending && cps.length > 0 && (
           <div className="mt-4">
-            <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-ink"><MapPin size={13} className="text-signal" /> Confirm a meeting checkpoint</div>
+            <div className="mb-2 flex items-center gap-1.5 text-xs font-bold text-ocean-900"><MapPin size={13} className="text-amber-500" /> Confirm a meeting checkpoint</div>
             <CheckpointPicker options={cps} selectedId={cp} onSelect={(c) => setCp(c.id)} />
           </div>
         )}
@@ -75,11 +75,11 @@ function MatchCard({ m, box, onChange }: { m: Match; box: "incoming" | "outgoing
         <div className="mt-4 flex items-center justify-end gap-2">
           {box === "incoming" && pending ? (
             <>
-              <Button variant="ghost" className="text-red-600 hover:bg-red-50" loading={busy} onClick={() => act("decline")}><XCircle size={15} /> Decline</Button>
+              <Button variant="ghost" className="text-rose-600 hover:bg-rose-50 font-bold" loading={busy} onClick={() => act("decline")}><XCircle size={15} /> Decline</Button>
               <Button loading={busy} onClick={() => act("accept")}><CheckCircle2 size={15} /> Accept & confirm</Button>
             </>
           ) : box === "outgoing" && pending ? (
-            <span className="text-xs text-ink-muted">Waiting for the host to respond</span>
+            <span className="text-xs font-semibold text-slate-600">Waiting for the host to respond</span>
           ) : (m.status === "accepted" || m.status === "confirmed") ? (
             <Button variant="outline" sm onClick={() => nav("/app/trips")}>View trip <ArrowRight size={14} /></Button>
           ) : null}

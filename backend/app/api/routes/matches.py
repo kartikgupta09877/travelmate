@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import get_current_user
 from app.core.database import get_database
 from app.core.utils import new_id, serialize, utcnow
-from app.db.repo import public_user, users_public_map
+from app.db.repo import public_geopoint, public_user, users_public_map
 from app.schemas.match import MatchOut, MatchRequest, PartnerResult
 from app.schemas.journey import PartnerSearchQuery
 from app.services import cost as cost_svc
@@ -26,6 +26,10 @@ async def _catalog() -> list:
 
 async def _hydrate_journey(doc: dict) -> dict:
     out = serialize(doc)
+    # A candidate journey always belongs to another member, so its start/end are
+    # only ever shown as coarsened public areas — never the host's exact point.
+    out["origin"] = public_geopoint(out.get("origin"))
+    out["destination"] = public_geopoint(out.get("destination"))
     host = await get_database().users.find_one({"_id": doc["host_id"]})
     out["host"] = public_user(host) if host else None
     return out

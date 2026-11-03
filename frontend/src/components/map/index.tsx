@@ -10,8 +10,8 @@ const LeafletPicker = lazy(() => import("./MapPicker"));
 export function MapView(props: MapViewProps) {
   return (
     <Suspense fallback={
-      <div className="grid place-items-center rounded-2xl bg-teal-wash/50 text-ink-muted"
-        style={{ height: props.height || 320 }}>
+      <div className="grid place-items-center rounded-2xl bg-teal-wash/50 text-slate-600 font-semibold"
+        style={{ height: props.height || 320 }} role="status" aria-live="polite">
         <Spinner /> <span className="ml-2 text-sm">Loading map…</span>
       </div>
     }>
@@ -23,7 +23,7 @@ export function MapView(props: MapViewProps) {
 export function MapPicker(props: { value?: { lat: number; lng: number } | null; onPick: (lat: number, lng: number) => void; height?: number }) {
   return (
     <Suspense fallback={
-      <div className="grid place-items-center rounded-xl bg-teal-wash/50 text-ink-muted" style={{ height: props.height || 320 }}>
+      <div className="grid place-items-center rounded-xl bg-teal-wash/50 text-slate-600 font-semibold" style={{ height: props.height || 320 }}>
         <Spinner /> <span className="ml-2 text-sm">Loading map…</span>
       </div>
     }>

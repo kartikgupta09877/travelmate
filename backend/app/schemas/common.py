@@ -96,3 +96,11 @@ class GeoPoint(BaseModel):
         default=None,
         description="Approximate public area label. Never an exact home address.",
     )
+    approximate: bool = Field(
+        default=False,
+        description=(
+            "True when lat/lng have been coarsened to a public ~1 km grid for "
+            "privacy (any viewer who is not the owner). False means exact "
+            "coordinates, only ever returned to the owner of the location."
+        ),
+    )

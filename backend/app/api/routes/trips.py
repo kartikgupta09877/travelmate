@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import get_current_user
 from app.core.database import get_database
 from app.core.utils import serialize, utcnow
-from app.db.repo import users_public_map
+from app.db.repo import public_geopoint, users_public_map
 from app.schemas.trip import TripOut, TripStatusUpdate
 from app.services import cost as cost_svc
 
@@ -27,6 +27,12 @@ async def _hydrate(doc: dict) -> dict:
     out.update(costs)
     out["total_cost"] = costs["shared_travel_cost"]
     out["cost_per_person"] = costs["per_person_cost"]
+    # Location privacy: even confirmed co-travellers coordinate via the shared
+    # meeting point, not each other's exact addresses. Origin/destination are
+    # coarsened to a public ~1 km area; the meeting_point (a public checkpoint
+    # both sides agreed on) is intentionally left exact.
+    out["origin"] = public_geopoint(out.get("origin"))
+    out["destination"] = public_geopoint(out.get("destination"))
     pmap = await users_public_map(doc.get("participant_ids", []))
     out["participants"] = [pmap[i] for i in doc.get("participant_ids", []) if i in pmap]
     return out

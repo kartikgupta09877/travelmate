@@ -20,7 +20,13 @@ function pinIcon(m: MapMarker): L.DivIcon {
 function Fit({ markers }: { markers: MapMarker[] }) {
   const map = useMap();
   useEffect(() => {
-    const pts = markers.map((m) => [m.lat, m.lng]) as [number, number][];
+    const pts = markers.flatMap((m) => {
+      if (!m.approximate || !m.radiusKm) return [[m.lat, m.lng] as [number, number]];
+      // Include the privacy-zone edge so the full approximate area is visible.
+      const latDelta = m.radiusKm / 111;
+      const lngDelta = m.radiusKm / (111 * Math.cos((m.lat * Math.PI) / 180));
+      return [[m.lat - latDelta, m.lng - lngDelta], [m.lat + latDelta, m.lng + lngDelta]] as [number, number][];
+    });
     if (pts.length === 0) return;
     if (pts.length === 1) { map.setView(pts[0], 13); return; }
     map.fitBounds(L.latLngBounds(pts), { padding: [42, 42], maxZoom: 14 });
@@ -28,23 +34,36 @@ function Fit({ markers }: { markers: MapMarker[] }) {
   return null;
 }
 
-export default function LeafletMap({ markers, routes = [], height = 320, className, interactive = true, zoom }: MapViewProps) {
+export default function LeafletMap({
+  markers, routes = [], height = 320, className, interactive = true, zoom,
+  label = "Journey map", description,
+}: MapViewProps) {
   const center = useMemo<[number, number]>(() => {
     if (markers.length) return [markers[0].lat, markers[0].lng];
     return [28.6304, 77.2177];
   }, [markers]);
 
+  const markerSummary = markers.map((m) => `${m.label || m.kind}${m.approximate ? ", approximate area" : ""}`).join("; ");
+  const routeSummary = routes.length
+    ? routes.map((r) => r.label || (r.estimated !== false ? "estimated travel corridor" : "route")).join("; ")
+    : "No route line is shown.";
+
   return (
-    <div className={className} style={{ height, borderRadius: 16, overflow: "hidden" }}>
+    <section className={className} style={{ height, borderRadius: 16, overflow: "hidden" }} aria-label={label}>
+      <p className="sr-only">{description || `${markerSummary || "No locations selected."} ${routeSummary} Use the map controls to zoom and pan.`}</p>
       <MapContainer center={center} zoom={zoom || 12} style={{ height: "100%", width: "100%" }}
         scrollWheelZoom={interactive} dragging={interactive} doubleClickZoom={interactive}
-        zoomControl={interactive} attributionControl>
+        zoomControl={interactive} attributionControl keyboard={interactive}
+        aria-label={label}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {routes.map((r, i) => (
           <Polyline key={i} positions={r.points}
-            pathOptions={{ color: r.tone === "muted" ? "#98A2B3" : "#0D9488", weight: 4, opacity: 0.9, dashArray: r.tone === "muted" ? "6 8" : undefined }} />
+            pathOptions={{
+              color: r.tone === "muted" ? "#64748B" : "#0D9488", weight: 4, opacity: 0.9,
+              dashArray: r.estimated !== false ? "8 8" : r.tone === "muted" ? "6 8" : undefined,
+            }} />
         ))}
         {markers.map((m, i) =>
           m.approximate ? (
@@ -53,13 +72,13 @@ export default function LeafletMap({ markers, routes = [], height = 320, classNa
               {m.label && <Tooltip>{m.label} (approx. area)</Tooltip>}
             </Circle>
           ) : (
-            <Marker key={i} position={[m.lat, m.lng]} icon={pinIcon(m)}>
+            <Marker key={i} position={[m.lat, m.lng]} icon={pinIcon(m)} title={m.label || m.kind} alt={m.label || m.kind}>
               {m.label && <Tooltip direction="top" offset={[0, -8]}>{m.label}</Tooltip>}
             </Marker>
           )
         )}
         <Fit markers={markers} />
       </MapContainer>
-    </div>
+    </section>
   );
 }

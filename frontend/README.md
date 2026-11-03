@@ -98,7 +98,10 @@ Map usage goes exclusively through the `MapView` component in `components/map`, 
 without touching page code.
 
 For privacy, approximate start locations render as **circles (zones), not pins** — exact coordinates
-are never plotted for other users.
+are never plotted for other users. Map route lines are deliberately dashed to communicate an
+**estimated travel corridor**, not turn-by-turn navigation. Until a routing provider is configured,
+the backend converts direct geographic distance into a conservative road-distance estimate for
+cost and time previews.
 
 ---
 

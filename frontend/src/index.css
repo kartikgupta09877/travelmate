@@ -2,57 +2,181 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
+:root {
+  color-scheme: light;
+}
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   @apply bg-canvas text-ink font-sans antialiased;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
 }
-* { -webkit-tap-highlight-color: transparent; }
 
-/* numbers align in tables/stats */
-.tnum { font-variant-numeric: tabular-nums; }
+* {
+  -webkit-tap-highlight-color: transparent;
+}
 
-/* focus ring — always visible for keyboard users */
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.2);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(13, 148, 136, 0.4);
+}
+
+/* Tabular numbers align cleanly in stats */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Modern focus ring */
 :focus-visible {
   outline: 2px solid #0D9488;
-  outline-offset: 2px;
-  border-radius: 6px;
+  outline-offset: 3px;
+  border-radius: 8px;
 }
 
 @layer components {
-  .container-app { @apply mx-auto w-full max-w-6xl px-4 sm:px-6; }
+  .container-app {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  }
 
-  .card { @apply rounded-2xl bg-white shadow-card border border-line/70; }
-  .card-hover { @apply transition-all duration-200 hover:shadow-lift hover:-translate-y-0.5; }
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-md border border-white shadow-card rounded-2xl;
+  }
 
-  .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold font-display transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none select-none; }
-  .btn-primary { @apply btn bg-teal text-white hover:bg-teal-dark shadow-sm; }
-  .btn-dark { @apply btn bg-ink text-white hover:bg-ink-soft; }
-  .btn-ghost { @apply btn bg-transparent text-ink-muted hover:bg-ink/5; }
-  .btn-outline { @apply btn border border-line bg-white text-ink hover:border-teal hover:text-teal; }
-  .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
-  .btn-sm { @apply px-3 py-1.5 text-xs rounded-lg; }
+  .glass-dark {
+    @apply bg-slate-900/95 backdrop-blur-xl border border-white/10 text-white shadow-lift;
+  }
 
-  .input { @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-muted/60 transition-colors focus:border-teal focus:outline-none focus:ring-4 focus:ring-teal/10; }
-  .label { @apply block text-xs font-semibold uppercase tracking-wide text-ink-muted mb-1.5; }
+  .card {
+    @apply rounded-2xl bg-white shadow-card border border-slate-200 transition-all duration-200;
+  }
 
-  .chip { @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium; }
-  .chip-teal { @apply chip bg-teal-wash text-teal-dark; }
-  .chip-verified { @apply chip bg-verified-wash text-verified; }
-  .chip-signal { @apply chip bg-signal-wash text-signal; }
-  .chip-mono { @apply chip font-mono bg-ink/5 text-ink-soft; }
+  .card-hover {
+    @apply hover:shadow-lift hover:-translate-y-1 hover:border-teal/30 active:translate-y-0;
+  }
 
-  .eyebrow { @apply text-xs font-semibold uppercase tracking-[0.14em] text-teal; }
-  .section-title { @apply font-display font-bold text-ink; }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold font-display transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:pointer-events-none select-none;
+  }
+
+  .btn-primary {
+    @apply btn text-white shadow-md hover:shadow-lg hover:-translate-y-0.5;
+    background-image: linear-gradient(to right, #0F766E, #0D9488);
+  }
+
+  .btn-primary:hover {
+    background-image: linear-gradient(to right, #0D9488, #2DD4BF);
+  }
+
+  .btn-coral {
+    @apply btn text-white shadow-md hover:shadow-lg hover:-translate-y-0.5;
+    background-image: linear-gradient(to right, #F97316, #FF6B6B);
+  }
+
+  .btn-coral:hover {
+    background-image: linear-gradient(to right, #EA580C, #F87171);
+  }
+
+  .btn-dark {
+    @apply btn bg-slate-900 text-white hover:bg-slate-800 shadow-sm hover:shadow-lift;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900;
+  }
+
+  .btn-outline {
+    @apply btn border border-slate-200 bg-white text-slate-900 hover:border-teal hover:bg-teal-wash hover:text-teal-dark shadow-sm;
+  }
+
+  .btn-danger {
+    @apply btn bg-rose-600 text-white hover:bg-rose-700 shadow-sm;
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs rounded-lg;
+  }
+
+  .btn-lg {
+    @apply px-6 py-3.5 text-base rounded-2xl;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 transition-all duration-150 focus:border-teal focus:outline-none focus:ring-4 focus:ring-teal/20 shadow-sm;
+  }
+
+  .label {
+    @apply block text-xs font-extrabold uppercase tracking-wider text-slate-700 mb-1.5;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors;
+  }
+
+  .chip-teal {
+    @apply chip bg-teal-wash text-teal-dark border border-teal/20;
+  }
+
+  .chip-verified {
+    @apply chip bg-emerald-wash text-emerald-800 border border-emerald-300;
+  }
+
+  .chip-signal {
+    @apply chip bg-signal-wash text-amber-900 border border-amber-300;
+  }
+
+  .chip-coral {
+    @apply chip bg-orange-50 text-orange-700 border border-orange-300;
+  }
+
+  .chip-mono {
+    @apply chip font-mono bg-slate-100 text-slate-800 border border-slate-200;
+  }
+
+  .eyebrow {
+    @apply text-xs font-extrabold uppercase tracking-widest text-teal-dark;
+  }
+
+  .section-title {
+    @apply font-display font-extrabold text-ocean-900 tracking-tight;
+  }
 }
 
-/* Leaflet: keep it under app chrome + rounded */
-.leaflet-container { font: inherit; z-index: 0; }
-.leaflet-container a { color: #0D9488; }
+/* Leaflet container fixes */
+.leaflet-container {
+  font: inherit;
+  z-index: 0;
+  border-radius: 1rem;
+}
+
+.leaflet-container a {
+  color: #0D9488;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
-  .leaflet-container { }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

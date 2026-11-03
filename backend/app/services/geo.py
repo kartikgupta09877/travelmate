@@ -1,9 +1,10 @@
 """Lightweight geo math. No external routing dependency so the app runs anywhere.
 
-Routes are approximated as straight corridors between origin and destination,
-which is sufficient for demo-grade overlap/proximity scoring. The interface is
-kept small so a real routing/geocoding provider (OSRM, Google, Mapbox) can be
-dropped in behind these functions later.
+Route geometry is still represented as a straight *corridor* for matching, but
+trip estimates use a conservative road-distance uplift rather than presenting
+great-circle distance as if it were a drivable route. The interface remains
+small so a routing provider (OSRM, Google, Mapbox) can replace the estimate
+without changing callers later.
 """
 import math
 from typing import List, Tuple
@@ -11,6 +12,23 @@ from typing import List, Tuple
 Point = Tuple[float, float]  # (lat, lng)
 
 EARTH_KM = 6371.0
+
+# Location privacy: coordinates shared with anyone other than their owner are
+# coarsened to this many decimal places. 2 dp ≈ a ~1.1 km grid cell at Delhi's
+# latitude — enough to place a rider on the map without revealing a home
+# address. Matching/routing keep using the raw stored coordinates server-side;
+# only the values serialised to clients are rounded.
+PUBLIC_COORD_PRECISION = 2
+
+
+def approximate_coord(value: float, precision: int = PUBLIC_COORD_PRECISION) -> float:
+    """Round a single latitude/longitude value to the public grid."""
+    return round(value, precision)
+
+
+def approximate_point(point: Point, precision: int = PUBLIC_COORD_PRECISION) -> Point:
+    """Coarsen a (lat, lng) point to the public grid for privacy-safe display."""
+    return (approximate_coord(point[0], precision), approximate_coord(point[1], precision))
 
 
 def haversine(a: Point, b: Point) -> float:
@@ -25,14 +43,27 @@ def haversine(a: Point, b: Point) -> float:
 
 
 def route_estimate(origin: Point, destination: Point) -> tuple[float, int]:
-    """Return the demo route distance and travel duration.
+    """Return an estimated road distance and travel duration.
 
-    TravelMate deliberately has no routing-provider dependency yet, so this is
-    a straight-line corridor estimate.  Keeping the approximation here means
-    journey creation, previews, and future routing-provider integrations use
-    one definition of distance and duration.
+    TravelMate deliberately has no routing-provider dependency yet. Road trips
+    are normally longer than a great-circle line because of streets, barriers,
+    and highway access, so a distance-band factor is applied consistently to
+    previews, saved journeys, costs, and durations. It is an estimate, not
+    turn-by-turn navigation.
     """
-    distance_km = round(haversine(origin, destination), 1)
+    straight_line_km = haversine(origin, destination)
+    # Dense city streets need the largest uplift; highway journeys tend to be
+    # closer to the direct line. These intentionally modest factors avoid
+    # implying precision that is unavailable without a routing provider.
+    if straight_line_km <= 5:
+        road_factor = 1.32
+    elif straight_line_km <= 30:
+        road_factor = 1.27
+    elif straight_line_km <= 120:
+        road_factor = 1.21
+    else:
+        road_factor = 1.16
+    distance_km = round(straight_line_km * road_factor, 1)
     # Effective city/intercity speeds, including normal stops and traffic.
     speed_kmh = 22.0 if distance_km <= 30 else 50.0
     duration_min = int(distance_km / speed_kmh * 60)

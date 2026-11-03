@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends
 from app.api.deps import get_current_user
 from app.core.database import get_database
 from app.core.utils import serialize
-from app.db.repo import public_user, users_public_map
+from app.db.repo import public_geopoint, public_user, users_public_map
 from app.services import cost as cost_svc
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -51,6 +51,10 @@ async def dashboard(me: dict = Depends(get_current_user)):
     if upcoming:
         pmap = await users_public_map(upcoming.get("participant_ids", []))
         upcoming_out = serialize(upcoming)
+        # Same privacy rule as the Trips API: coarsen origin/destination, keep
+        # the shared meeting point exact.
+        upcoming_out["origin"] = public_geopoint(upcoming_out.get("origin"))
+        upcoming_out["destination"] = public_geopoint(upcoming_out.get("destination"))
         upcoming_out["participants"] = [
             pmap[i] for i in upcoming.get("participant_ids", []) if i in pmap
         ]

@@ -23,13 +23,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div className="pointer-events-none fixed inset-x-0 bottom-4 sm:bottom-6 z-[60] flex flex-col items-center gap-2 px-4">
         {items.map((t) => {
           const Icon = t.kind === "success" ? CheckCircle2 : t.kind === "error" ? AlertTriangle : Info;
-          const tone = t.kind === "success" ? "text-verified" : t.kind === "error" ? "text-red-600" : "text-teal";
+          const tone = t.kind === "success" ? "text-emerald-600" : t.kind === "error" ? "text-rose-600" : "text-teal-dark";
           return (
             <div key={t.id}
-              className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-line bg-white px-4 py-3 shadow-lift animate-fade">
+              className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lift animate-fade">
               <Icon size={18} className={cx("mt-0.5 shrink-0", tone)} />
-              <p className="flex-1 text-sm text-ink-soft">{t.message}</p>
-              <button onClick={() => remove(t.id)} className="text-ink-muted hover:text-ink"><X size={15} /></button>
+              <p className="flex-1 text-sm font-semibold text-ocean-900">{t.message}</p>
+              <button onClick={() => remove(t.id)} className="text-slate-500 hover:text-ocean-900 transition-colors"><X size={15} /></button>
             </div>
           );
         })}

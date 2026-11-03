@@ -8,8 +8,8 @@ import type {
   VerificationChannel, VehicleInfo,
   JourneyCreateInput, JourneyPreviewInput,
 } from "./types";
-
-const BASE = import.meta.env.VITE_API_BASE || "";
+const RAW_BASE = import.meta.env.VITE_API_BASE || "";
+const BASE = RAW_BASE.replace(/\/+$/, "");
 const TOKEN_KEY = "travelmate_token";
 
 export function getToken(): string | null {

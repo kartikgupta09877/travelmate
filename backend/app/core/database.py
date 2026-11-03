@@ -48,6 +48,12 @@ def _create_client():
 async def connect_to_mongo() -> None:
     _state.client = _create_client()
     _state.db = _state.client[settings.mongodb_db]
+    # mongomock-motor is intentionally used for zero-setup local development,
+    # but its index coroutine can hang on newer Python runtimes. Indexes are a
+    # production concern and the mock DB starts empty for each run, so skipping
+    # them here keeps the development server responsive.
+    if settings.use_mock_db:
+        return
     # Best-effort indexes (mongomock supports a subset).
     try:
         await _state.db.users.create_index("email", unique=True)

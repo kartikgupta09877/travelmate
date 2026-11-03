@@ -23,6 +23,9 @@ export interface GeoPoint {
   lat: number;
   lng: number;
   zone?: string | null;
+  // True when the backend has coarsened lat/lng to a public ~1 km grid for
+  // privacy (any location that isn't the current user's own).
+  approximate?: boolean;
 }
 
 export interface VehicleInfo {

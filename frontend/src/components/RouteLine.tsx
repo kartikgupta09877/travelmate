@@ -30,9 +30,9 @@ export function RouteLine({
         <circle cx="304" cy="20" r="11" fill="#16A34A" opacity="0.12" />
       </svg>
       {(from || to || checkpoint) && (
-        <div className="mt-1 flex items-center justify-between text-[11px] font-medium text-ink-muted">
+        <div className="mt-1 flex items-center justify-between text-[11px] font-bold text-slate-700">
           <span className="max-w-[32%] truncate">{from}</span>
-          {checkpoint ? <span className="max-w-[36%] truncate text-signal font-semibold">◇ {checkpoint}</span> : <span />}
+          {checkpoint ? <span className="max-w-[36%] truncate text-amber-600 font-extrabold">◇ {checkpoint}</span> : <span />}
           <span className="max-w-[32%] truncate text-right">{to}</span>
         </div>
       )}

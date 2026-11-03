@@ -17,6 +17,7 @@ import Messages from "@/pages/Messages";
 import Profile from "@/pages/Profile";
 import Verify from "@/pages/Verify";
 import SafetyCenter from "@/pages/SafetyCenter";
+import TrustLab from "@/pages/TrustLab";
 import Settings from "@/pages/Settings";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import NotFound from "@/pages/NotFound";
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="profile/:id" element={<Profile />} />
         <Route path="verify" element={<Verify />} />
         <Route path="safety" element={<SafetyCenter />} />
+        <Route path="trust-lab" element={<TrustLab />} />
         <Route path="settings" element={<Settings />} />
         <Route path="admin" element={<ProtectedRoute admin><AdminDashboard /></ProtectedRoute>} />
       </Route>

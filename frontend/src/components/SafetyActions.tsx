@@ -37,9 +37,9 @@ export function SosButton({ tripId, className, block }: { tripId?: string; class
             <div className="flex items-center gap-2 font-semibold"><ShieldAlert size={16} /> This does not replace emergency services.</div>
             <p className="mt-1 text-red-600/90">If you are in danger, call your local emergency number immediately. TravelMate alerts your trusted contacts and logs the alert — it cannot dispatch help.</p>
           </div>
-          {loading ? <p className="text-sm text-ink-muted">Raising alert and sharing your approximate location…</p> : res && (
+          {loading ? <p className="text-sm font-semibold text-slate-600">Raising alert and sharing your approximate location…</p> : res && (
             <>
-              <p className="text-sm text-ink-soft">{res.message}</p>
+              <p className="text-sm font-bold text-ocean-900">{res.message}</p>
               <div className="grid gap-2">
                 {[
                   { Icon: Phone, label: "Police", num: res.emergency_numbers.police },
@@ -47,14 +47,14 @@ export function SosButton({ tripId, className, block }: { tripId?: string; class
                   { Icon: Phone, label: "Women's helpline", num: res.emergency_numbers.women_helpline },
                 ].map((e) => (
                   <a key={e.label} href={`tel:${e.num}`}
-                    className="flex items-center gap-3 rounded-xl border border-line px-4 py-3 hover:bg-canvas">
-                    <e.Icon size={18} className="text-red-600" />
-                    <span className="flex-1 text-sm font-medium text-ink">{e.label}</span>
-                    <span className="font-mono font-700 text-ink">{e.num}</span>
+                    className="flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3 hover:bg-slate-50 transition-colors">
+                    <e.Icon size={18} className="text-rose-600" />
+                    <span className="flex-1 text-sm font-bold text-ocean-900">{e.label}</span>
+                    <span className="font-mono font-extrabold text-rose-600">{e.num}</span>
                   </a>
                 ))}
               </div>
-              <p className="text-[11px] text-ink-muted">{res.disclaimer}</p>
+              <p className="text-[11px] font-semibold text-slate-600 leading-relaxed">{res.disclaimer}</p>
             </>
           )}
         </div>
@@ -95,10 +95,10 @@ export function ShareTripButton({ tripId, variant = "outline", block }: { tripId
           : <><Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button><Button loading={loading} onClick={share}>Create link</Button></>}>
         {url ? (
           <div className="space-y-3">
-            <p className="text-sm text-ink-soft">Send this private link to someone you trust. They can follow your trip status and meeting point without signing in.</p>
-            <div className="flex items-center gap-2 rounded-xl border border-line bg-canvas p-2">
-              <span className="flex-1 truncate font-mono text-xs text-ink-soft">{url}</span>
-              <button onClick={copy} className="rounded-lg bg-teal px-3 py-1.5 text-xs font-semibold text-white">
+            <p className="text-sm font-semibold text-slate-700">Send this private link to someone you trust. They can follow your trip status and meeting point without signing in.</p>
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+              <span className="flex-1 truncate font-mono text-xs font-bold text-ocean-900">{url}</span>
+              <button onClick={copy} className="rounded-lg bg-teal-dark px-3 py-1.5 text-xs font-bold text-white hover:bg-teal transition-colors cursor-pointer">
                 {copied ? <Check size={14} /> : <Copy size={14} />}
               </button>
             </div>
@@ -134,7 +134,7 @@ export function ReportButton({ userId, tripId, label = "Report", block }: { user
 
   return (
     <>
-      <Button variant="ghost" className={cx("text-red-600 hover:bg-red-50", block && "w-full")} onClick={() => setOpen(true)}>
+      <Button variant="ghost" className={cx("text-rose-600 hover:bg-rose-50 font-bold", block && "w-full")} onClick={() => setOpen(true)}>
         <Flag size={16} /> {label}
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Report a user" size="sm"
@@ -142,7 +142,7 @@ export function ReportButton({ userId, tripId, label = "Report", block }: { user
         <div className="space-y-4">
           <Field label="Reason"><Select value={reason} onChange={(e) => setReason(e.target.value)}>{REASONS.map((r) => <option key={r}>{r}</option>)}</Select></Field>
           <Field label="What happened?" hint="optional"><Textarea value={details} onChange={(e) => setDetails(e.target.value)} placeholder="Share any details that help us review this." /></Field>
-          <p className="text-[11px] text-ink-muted">Reports are confidential. Misuse of reporting may affect your own trust level.</p>
+          <p className="text-[11px] font-semibold text-slate-600">Reports are confidential. Misuse of reporting may affect your own trust level.</p>
         </div>
       </Modal>
     </>

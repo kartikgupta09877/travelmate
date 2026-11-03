@@ -20,21 +20,21 @@ import { useToast } from "@/components/ui/Toast";
 import { inr, km, minutes, time12, prettyDate, statusLabel } from "@/lib/format";
 
 const FLOW: Record<string, { next: TripStatus; label: string; Icon: typeof PlayCircle }[]> = {
-  pending: [{ next: "confirmed", label: "Confirm trip", Icon: CheckCircle2 }],
-  requested: [{ next: "confirmed", label: "Confirm trip", Icon: CheckCircle2 }],
-  accepted: [{ next: "confirmed", label: "Confirm trip", Icon: CheckCircle2 }],
-  confirmed: [{ next: "in_progress", label: "Start trip", Icon: PlayCircle }],
-  in_progress: [{ next: "completed", label: "Complete trip", Icon: CheckCircle2 }],
+  pending: [{ next: "confirmed", label: "Confirm Trip", Icon: CheckCircle2 }],
+  requested: [{ next: "confirmed", label: "Confirm Trip", Icon: CheckCircle2 }],
+  accepted: [{ next: "confirmed", label: "Confirm Trip", Icon: CheckCircle2 }],
+  confirmed: [{ next: "in_progress", label: "Start Trip", Icon: PlayCircle }],
+  in_progress: [{ next: "completed", label: "Complete Trip", Icon: CheckCircle2 }],
 };
 
 function StarInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   const [hover, setHover] = useState(0);
   return (
-    <div className="flex gap-1">
+    <div className="flex gap-1.5">
       {[1, 2, 3, 4, 5].map((n) => (
         <button key={n} type="button" onMouseEnter={() => setHover(n)} onMouseLeave={() => setHover(0)}
-          onClick={() => onChange(n)} className="p-0.5">
-          <Star size={28} className={cx((hover || value) >= n ? "text-signal" : "text-ink/20")}
+          onClick={() => onChange(n)} className="p-1 cursor-pointer">
+          <Star size={30} className={cx((hover || value) >= n ? "text-amber-500" : "text-slate-200")}
             fill={(hover || value) >= n ? "#F59E0B" : "none"} />
         </button>
       ))}
@@ -61,9 +61,9 @@ export default function TripDetail() {
   const [tags, setTags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
 
-  if (isLoading) return <Loading label="Loading trip…" />;
-  if (isError) return <div className="py-16 text-center text-ink-muted">{error instanceof ApiError ? error.message : "Could not load this trip."}</div>;
-  if (!t) return <div className="py-16 text-center text-ink-muted">Trip not found. <Link to="/app/trips" className="text-teal">Back to trips</Link></div>;
+  if (isLoading) return <Loading label="Loading trip detail…" />;
+  if (isError) return <div className="py-20 text-center text-slate-500">{error instanceof ApiError ? error.message : "Could not load this trip."}</div>;
+  if (!t) return <div className="py-20 text-center text-slate-500">Trip not found. <Link to="/app/trips" className="text-teal-dark font-bold hover:underline">Back to trips</Link></div>;
 
   const others = t.participants.filter((p) => p.id !== user?.id);
   const mp = t.meeting_point;
@@ -81,10 +81,10 @@ export default function TripDetail() {
     setBusy(true);
     try {
       await api.trips.setStatus(t.id, s);
-      toast.push(`Trip ${statusLabel(s).toLowerCase()}.`, s === "cancelled" ? "info" : "success");
+      toast.push(`Trip status updated to ${statusLabel(s).toLowerCase()}.`, s === "cancelled" ? "info" : "success");
       qc.invalidateQueries({ queryKey: ["trip", id] });
       qc.invalidateQueries({ queryKey: ["trips"] });
-    } catch { toast.push("Could not update the trip.", "error"); }
+    } catch { toast.push("Could not update the trip status.", "error"); }
     finally { setBusy(false); }
   };
 
@@ -93,9 +93,11 @@ export default function TripDetail() {
     setBusy(true);
     try {
       await api.reviews.create({ trip_id: t.id, reviewee_id: rateFor, rating, comment: comment || undefined, tags });
-      toast.push("Thanks for your review!", "success");
+      toast.push("Thank you for your feedback!", "success");
       setRateFor(null); setComment(""); setTags([]); setRating(5);
-    } catch { toast.push("Could not submit review.", "error"); }
+    } catch (e) {
+      toast.push(e instanceof ApiError ? e.message : "Could not submit review.", "error");
+    }
     finally { setBusy(false); }
   };
 
@@ -103,79 +105,81 @@ export default function TripDetail() {
   const terminal = t.status === "completed" || t.status === "cancelled";
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-6 animate-fade">
       <div className="flex items-center justify-between">
-        <button onClick={() => nav("/app/trips")} className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink">
-          <ArrowLeft size={16} /> All trips
+        <button onClick={() => nav("/app/trips")} className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-ocean-900 transition-colors">
+          <ArrowLeft size={16} /> All Trips
         </button>
         <Chip tone={t.status === "completed" ? "verified" : t.status === "cancelled" ? "danger" : t.status === "in_progress" ? "signal" : "teal"}>
           {statusLabel(t.status)}
         </Chip>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.3fr,1fr]">
-        <div className="space-y-6">
-          <Card>
-            <div className="p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <Chip tone={t.section === "long" ? "signal" : "teal"}>{t.section === "long" ? "Long trip" : "Local"}</Chip>
-                <span className="text-sm text-ink-muted">{t.date ? prettyDate(t.date) : ""}</span>
+      <div className="grid gap-6 lg:grid-cols-12">
+        <div className="lg:col-span-7 space-y-6">
+          <Card className="border border-slate-200/80 shadow-card">
+            <div className="p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <Chip tone={t.section === "long" ? "coral" : "teal"}>{t.section === "long" ? "Intercity Trip" : "Local Commute"}</Chip>
+                <span className="text-xs font-bold text-slate-600">{t.date ? prettyDate(t.date) : ""}</span>
               </div>
               <RouteLine from={t.origin.zone || t.origin.label} to={t.destination.label} checkpoint={mp?.name} />
-              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-xl bg-canvas p-3">
-                  <Clock size={16} className="mx-auto text-teal" />
-                  <div className="mt-1 font-display font-700 text-ink">{time12(t.departure_time)}</div>
-                  <div className="text-[11px] text-ink-muted">Departure</div>
+              <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+                <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-200/60">
+                  <Clock size={18} className="mx-auto text-teal" />
+                  <div className="mt-1.5 font-display font-800 text-ocean-900 text-sm">{time12(t.departure_time)}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Departure</div>
                 </div>
-                <div className="rounded-xl bg-canvas p-3">
-                  <RouteIcon size={16} className="mx-auto text-teal" />
-                  <div className="mt-1 font-display font-700 text-ink">{km(t.distance_km)}</div>
-                  <div className="text-[11px] text-ink-muted">{minutes(t.duration_min)}</div>
+                <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-200/60">
+                  <RouteIcon size={18} className="mx-auto text-teal" />
+                  <div className="mt-1.5 font-display font-800 text-ocean-900 text-sm">{km(t.distance_km)}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">{minutes(t.duration_min)}</div>
                 </div>
-                <div className="rounded-xl bg-canvas p-3">
-                  <Wallet size={16} className="mx-auto text-teal" />
-                  <div className="mt-1 font-display font-700 text-teal">{inr(t.cost_per_person)}</div>
-                  <div className="text-[11px] text-ink-muted">Per person</div>
+                <div className="rounded-2xl bg-slate-50 p-3.5 border border-slate-200/60">
+                  <Wallet size={18} className="mx-auto text-teal-dark" />
+                  <div className="mt-1.5 font-display font-800 text-teal-dark text-sm">{inr(t.cost_per_person)}</div>
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Per Person</div>
                 </div>
               </div>
             </div>
           </Card>
 
-          <Card><div className="p-2"><MapView markers={markers} routes={routes} height={280} zoom={12} /></div></Card>
+          <Card className="border border-slate-200/80 shadow-card overflow-hidden">
+            <MapView markers={markers} routes={routes} height={300} zoom={12} />
+          </Card>
 
           {mp && (
-            <Card>
-              <div className="p-5">
-                <div className="flex items-center gap-2"><MapPin size={16} className="text-signal" /><span className="font-display font-700 text-ink">Meeting point</span></div>
-                <div className="mt-2 font-display font-600 text-ink">{mp.name}</div>
-                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-muted">
+            <Card className="border border-slate-200/80 shadow-xs">
+              <div className="p-6">
+                <div className="flex items-center gap-2 mb-2"><MapPin size={18} className="text-amber-500" /><span className="font-display font-700 text-ocean-900 text-base">Meeting Checkpoint</span></div>
+                <div className="font-display font-700 text-lg text-ocean-900">{mp.name}</div>
+                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs font-semibold text-slate-600">
                   <span>You: {km(mp.distance_from_requester_km)}</span>
                   <span>Partner: {km(mp.distance_from_host_km)}</span>
-                  {mp.eta && <span>Meet ≈ {time12(mp.eta)}</span>}
+                  {mp.eta && <span>ETA ≈ {time12(mp.eta)}</span>}
                 </div>
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-verified"><ShieldCheck size={13} /> Safe public checkpoint · exact spot shared only between confirmed travellers</div>
+                <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-emerald-700"><ShieldCheck size={14} /> Safe public meeting point</div>
               </div>
             </Card>
           )}
         </div>
 
         {/* Right column */}
-        <div className="space-y-6">
+        <div className="lg:col-span-5 space-y-6">
           {/* Participants */}
-          <Card>
-            <div className="p-5">
-              <div className="mb-3 flex items-center gap-2"><Users size={16} className="text-teal" /><span className="font-display font-700 text-ink">Travellers ({t.participants.length})</span></div>
-              <div className="space-y-3">
+          <Card className="border border-slate-200/80 shadow-card">
+            <div className="p-6">
+              <div className="mb-4 flex items-center gap-2"><Users size={18} className="text-teal" /><span className="font-display font-700 text-ocean-900 text-base">Travellers ({t.participants.length})</span></div>
+              <div className="space-y-4">
                 {t.participants.map((p) => (
-                  <div key={p.id} className="flex items-center gap-3">
-                    <Avatar name={p.full_name} src={p.photo_url} id={p.id} size={40} verified={p.verification.identity} />
+                  <div key={p.id} className="flex items-center gap-3.5">
+                    <Avatar name={p.full_name} src={p.photo_url} id={p.id} size={42} verified={p.verification.identity} />
                     <div className="min-w-0 flex-1">
-                      <Link to={`/app/profile/${p.id}`} className="font-display font-600 text-ink hover:underline">
-                        {p.full_name}{p.id === user?.id && <span className="ml-1 text-xs text-ink-muted">(you)</span>}
-                        {p.id === t.host_id && <span className="ml-1 text-[11px] text-teal">· host</span>}
+                      <Link to={`/app/profile/${p.id}`} className="font-display font-700 text-ocean-900 hover:underline">
+                        {p.full_name}{p.id === user?.id && <span className="ml-1 text-xs text-slate-600 font-semibold">(you)</span>}
+                        {p.id === t.host_id && <span className="ml-1 text-[11px] font-bold text-teal-dark">· Host</span>}
                       </Link>
-                      <Stars rating={p.stats.rating} count={p.stats.ratings_count} size={12} />
+                      <div className="mt-0.5"><Stars rating={p.stats.rating} count={p.stats.ratings_count} size={12} /></div>
                     </div>
                     {t.status === "completed" && p.id !== user?.id && (
                       <Button variant="outline" sm onClick={() => setRateFor(p.id)}><Star size={13} /> Rate</Button>
@@ -186,77 +190,78 @@ export default function TripDetail() {
             </div>
           </Card>
 
-          <Card>
-            <div className="p-5">
-              <div className="mb-3 flex items-center gap-2"><Wallet size={16} className="text-teal" /><span className="font-display font-700 text-ink">Cost split</span></div>
+          {/* Cost Split details */}
+          <Card className="border border-slate-200/80 shadow-xs">
+            <div className="p-6">
+              <div className="mb-4 flex items-center gap-2"><Wallet size={18} className="text-teal" /><span className="font-display font-700 text-ocean-900 text-base">Cost Split Breakdown</span></div>
               {costError ? (
-                <p className="text-sm text-ink-muted">The latest split could not be loaded. The trip estimate is shown above.</p>
+                <p className="text-xs text-slate-600 font-medium">Live cost breakdown unavailable. Estimated fare is shown above.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-xl bg-canvas p-3"><div className="text-xs text-ink-muted">Journey cost</div><div className="mt-1 font-mono font-700 text-ink tnum">{inr(cost?.solo_travel_cost ?? t.solo_travel_cost)}</div></div>
-                  <div className="rounded-xl bg-canvas p-3"><div className="text-xs text-ink-muted">Shared cost</div><div className="mt-1 font-mono font-700 text-ink tnum">{inr(cost?.shared_travel_cost ?? t.shared_travel_cost)}</div></div>
-                  <div className="rounded-xl bg-teal-wash p-3"><div className="text-xs text-teal-dark">Your share</div><div className="mt-1 font-mono font-700 text-teal tnum">{inr(cost?.per_person_cost ?? t.per_person_cost)}</div></div>
-                  <div className="rounded-xl bg-verified-wash p-3"><div className="text-xs text-verified">You save</div><div className="mt-1 font-mono font-700 text-verified tnum">{inr(cost?.estimated_savings ?? t.estimated_savings)}</div></div>
+                <div className="grid grid-cols-2 gap-3 text-xs font-semibold">
+                  <div className="rounded-2xl bg-slate-50 p-3 border border-slate-200/60"><div className="text-slate-600 font-bold">Total Route Cost</div><div className="mt-1 font-mono font-bold text-ocean-900 text-sm tnum">{inr(cost?.solo_travel_cost ?? t.solo_travel_cost)}</div></div>
+                  <div className="rounded-2xl bg-slate-50 p-3 border border-slate-200/60"><div className="text-slate-600 font-bold">Shared Route Cost</div><div className="mt-1 font-mono font-bold text-ocean-900 text-sm tnum">{inr(cost?.shared_travel_cost ?? t.shared_travel_cost)}</div></div>
+                  <div className="rounded-2xl bg-teal-wash p-3 border border-teal/20"><div className="text-teal-dark font-bold">Your Share</div><div className="mt-1 font-mono font-extrabold text-teal-dark text-base tnum">{inr(cost?.per_person_cost ?? t.per_person_cost)}</div></div>
+                  <div className="rounded-2xl bg-emerald-50 p-3 border border-emerald-200"><div className="text-emerald-700 font-bold">You Save</div><div className="mt-1 font-mono font-extrabold text-emerald-700 text-base tnum">{inr(cost?.estimated_savings ?? t.estimated_savings)}</div></div>
                 </div>
               )}
             </div>
           </Card>
 
           {/* Actions */}
-          <Card>
-            <div className="space-y-2.5 p-5">
+          <Card className="border border-slate-200/80 shadow-card">
+            <div className="space-y-3 p-6">
               {t.conversation_id && (
-                <Button className="w-full" onClick={() => nav(`/app/messages/${t.conversation_id}`)}>
-                  <MessageSquare size={16} /> Open chat
+                <Button lg className="w-full" onClick={() => nav(`/app/messages/${t.conversation_id}`)}>
+                  <MessageSquare size={18} /> Open Trip Chat
                 </Button>
               )}
               {actions.map((a) => (
-                <Button key={a.next} variant="outline" className="w-full" loading={busy} onClick={() => setStatus(a.next)}>
-                  <a.Icon size={16} /> {a.label}
+                <Button key={a.next} variant="outline" lg className="w-full" loading={busy} onClick={() => setStatus(a.next)}>
+                  <a.Icon size={18} /> {a.label}
                 </Button>
               ))}
               {!terminal && (
-                <Button variant="ghost" className="w-full text-red-600 hover:bg-red-50" onClick={() => setStatus("cancelled")}>
-                  <XCircle size={16} /> Cancel trip
+                <Button variant="ghost" className="w-full text-rose-600 hover:bg-rose-50 font-bold" onClick={() => setStatus("cancelled")}>
+                  <XCircle size={18} /> Cancel Trip
                 </Button>
               )}
             </div>
           </Card>
 
-          {/* Safety */}
-          <Card>
-            <div className="space-y-2.5 p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-ink"><ShieldCheck size={15} className="text-teal" /> Safety</div>
+          {/* Safety Center triggers */}
+          <Card className="border border-slate-200/80 shadow-xs">
+            <div className="space-y-3 p-6">
+              <div className="flex items-center gap-2 text-sm font-bold text-ocean-900"><ShieldCheck size={16} className="text-teal" /> Trip Safety</div>
               <SosButton tripId={t.id} block />
               <ShareTripButton tripId={t.id} block />
               {others[0] && <ReportButton userId={others[0].id} tripId={t.id} block label={`Report ${others[0].full_name.split(" ")[0]}`} />}
-              <p className="text-[11px] leading-relaxed text-ink-muted">SOS alerts your trusted contacts and logs the incident. It does not contact or replace emergency services — call them directly in a real emergency.</p>
+              <p className="text-[11px] leading-relaxed text-slate-600 font-medium">SOS notifies your emergency contacts with real-time location. In urgent scenarios, dial local emergency services directly.</p>
             </div>
           </Card>
 
           {t.status === "completed" && (
-            <div className="flex items-center justify-center gap-1.5 rounded-xl bg-verified-wash px-4 py-3 text-sm text-verified">
-              <Leaf size={15} /> Nice — this shared trip saved ≈ {(t.distance_km * 0.12).toFixed(1)} kg CO₂.
+            <div className="flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 border border-emerald-200 p-4 text-xs font-bold text-emerald-700">
+              <Leaf size={16} /> Shared trip complete! Saved ≈ {(t.distance_km * 0.12).toFixed(1)} kg CO₂ emissions.
             </div>
           )}
         </div>
       </div>
 
-      {/* Rating modal */}
+      {/* Review Modal */}
       <Modal open={!!rateFor} onClose={() => setRateFor(null)} title="Rate your travel partner" size="sm"
-        footer={<><Button variant="ghost" onClick={() => setRateFor(null)}>Cancel</Button><Button loading={busy} onClick={submitReview}>Submit review</Button></>}>
+        footer={<><Button variant="ghost" onClick={() => setRateFor(null)}>Cancel</Button><Button loading={busy} onClick={submitReview}>Submit Review</Button></>}>
         <div className="space-y-4">
           <div className="flex flex-col items-center gap-2">
             <StarInput value={rating} onChange={setRating} />
-            <span className="text-sm text-ink-muted">{["", "Poor", "Fair", "Good", "Great", "Excellent"][rating]}</span>
+            <span className="text-xs font-bold text-slate-500">{["", "Poor", "Fair", "Good", "Great", "Excellent"][rating]}</span>
           </div>
           <div className="flex flex-wrap gap-2">
             {REVIEW_TAGS.map((tg) => (
               <button key={tg} type="button" onClick={() => setTags((s) => s.includes(tg) ? s.filter((x) => x !== tg) : [...s, tg])}
-                className={cx("chip cursor-pointer", tags.includes(tg) ? "bg-teal text-white" : "bg-ink/5 text-ink-muted")}>{tg}</button>
+                className={cx("chip cursor-pointer select-none", tags.includes(tg) ? "bg-teal text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200")}>{tg}</button>
             ))}
           </div>
-          <Textarea placeholder="Share a few words about the journey (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
+          <Textarea placeholder="Write a brief comment about the experience (optional)" value={comment} onChange={(e) => setComment(e.target.value)} />
         </div>
       </Modal>
     </div>

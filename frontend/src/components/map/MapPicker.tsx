@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import { useEffect, useState } from "react";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -13,18 +13,29 @@ function Clicker({ onPick }: { onPick: (lat: number, lng: number) => void }) {
   return null;
 }
 
+function Recenter({ position }: { position: [number, number] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (position) map.setView(position, Math.max(map.getZoom(), 14), { animate: true });
+  }, [map, position]);
+  return null;
+}
+
 export default function MapPicker({ value, onPick, height = 320 }:
   { value?: { lat: number; lng: number } | null; onPick: (lat: number, lng: number) => void; height?: number }) {
   const [pos, setPos] = useState<[number, number] | null>(value ? [value.lat, value.lng] : null);
+  useEffect(() => setPos(value ? [value.lat, value.lng] : null), [value?.lat, value?.lng]);
   const handle = (lat: number, lng: number) => { setPos([lat, lng]); onPick(lat, lng); };
   return (
-    <div style={{ height, borderRadius: 12, overflow: "hidden" }}>
-      <MapContainer center={pos || [28.6304, 77.2177]} zoom={11} style={{ height: "100%", width: "100%" }}>
+    <section style={{ height, borderRadius: 12, overflow: "hidden" }} aria-label="Location picker map">
+      <p className="sr-only">Select an approximate area by clicking the map, or use the latitude and longitude fields below the map.</p>
+      <MapContainer center={pos || [28.6304, 77.2177]} zoom={11} style={{ height: "100%", width: "100%" }} keyboard aria-label="Location picker">
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; OpenStreetMap' />
         <Clicker onPick={handle} />
+        <Recenter position={pos} />
         {pos && <Marker position={pos} icon={icon} />}
       </MapContainer>
-    </div>
+    </section>
   );
 }

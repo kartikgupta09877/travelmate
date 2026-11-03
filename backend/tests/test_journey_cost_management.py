@@ -116,10 +116,9 @@ class ProfileVehicleTests(unittest.TestCase):
 
         self.assertEqual(user.vehicle.seats, 0)
 
-
 class JourneyRouteTests(unittest.TestCase):
     def test_cost_preview_and_trip_cost_routes_are_registered(self):
-        routes = {(route.path, tuple(sorted(route.methods or []))) for route in app.routes}
+        routes = {(route.path, tuple(sorted(getattr(route, "methods", None) or []))) for route in app.routes}
 
         self.assertIn(("/api/journeys/preview", ("POST",)), routes)
         self.assertIn(("/api/journeys/preview/cost", ("GET",)), routes)

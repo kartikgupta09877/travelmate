@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from app.api.deps import get_current_user
 from app.core.database import get_database
 from app.core.utils import new_id, serialize, utcnow
-from app.db.repo import public_user
+from app.db.repo import public_geopoint, public_user
 from app.schemas.common import JourneyType
 from app.schemas.journey import JourneyCostPreview, JourneyCreate, JourneyOut
 from app.services import cost as cost_svc
@@ -62,7 +62,7 @@ def _cost_response(
     }
 
 
-async def _hydrate(doc: dict) -> dict:
+async def _hydrate(doc: dict, viewer_id: Optional[str] = None) -> dict:
     out = serialize(doc)
     travelers = max(1, int(doc.get("group_current", doc.get("group_size", 1))))
     costs = cost_svc.cost_breakdown(
@@ -74,6 +74,11 @@ async def _hydrate(doc: dict) -> dict:
     out.update(costs)
     out["estimated_cost_total"] = costs["shared_travel_cost"]
     out.setdefault("group_size", travelers)
+    # Location privacy: only the host who created the journey sees its exact
+    # origin/destination. Everyone else gets a coarsened, ~1 km public area.
+    if doc.get("host_id") != viewer_id:
+        out["origin"] = public_geopoint(out.get("origin"))
+        out["destination"] = public_geopoint(out.get("destination"))
     host = await get_database().users.find_one({"_id": doc["host_id"]})
     out["host"] = public_user(host) if host else None
     return out
@@ -125,7 +130,7 @@ async def create_journey(body: JourneyCreate, user: dict = Depends(get_current_u
         "created_at": utcnow(),
     }
     await db.journeys.insert_one(doc)
-    return await _hydrate(doc)
+    return await _hydrate(doc, user["_id"])
 
 
 @router.post("/preview")
@@ -169,17 +174,17 @@ async def list_journeys(
     if type:
         query["type"] = type.value
     cursor = get_database().journeys.find(query).sort("created_at", -1)
-    return [await _hydrate(doc) async for doc in cursor]
+    return [await _hydrate(doc, user["_id"]) async for doc in cursor]
 
 
 @router.get("/{journey_id}", response_model=JourneyOut)
-async def get_journey(journey_id: str, _: dict = Depends(get_current_user)):
+async def get_journey(journey_id: str, user: dict = Depends(get_current_user)):
     from fastapi import HTTPException
 
     doc = await get_database().journeys.find_one({"_id": journey_id})
     if not doc:
         raise HTTPException(404, "Journey not found")
-    return await _hydrate(doc)
+    return await _hydrate(doc, user["_id"])
 
 
 @router.get("/preview/cost")
